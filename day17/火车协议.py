@@ -12,7 +12,10 @@ def recv_train(s: socket.socket):
     train_head = s.recv(4)
     if train_head:
         file_len = struct.unpack('I', train_head)
-        data = s.recv(file_len[0])
-        return data
+        total = 0
+        while total < file_len[0]:
+            data = s.recv(1000)
+            total += len(data)
+            return data
     else:
         return None
