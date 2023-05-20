@@ -17,21 +17,21 @@ class Client:
     def _puts_file(self, file_name):
         self._send_train(file_name.encode('utf8'))
         f = open(file_name, 'rb')
-        st = f.readline()
-        st = st.replace(b'\r\n', b'\n')
-        while st:
-            self._send_train(st)
-            st = f.readline()
-            st = st.replace(b'\r\n', b'\n')
-        self._send_train('成功'.encode('utf8'))
+        while True:
+            data = f.read(10000)
+            if data:
+                self._send_train(data)
+            else:
+                self._send_train(''.encode('utf8'))
+                break
         f.close()
 
     def _gets_file(self):
         file_name = self._recv_train().decode('utf8')
-        f = open(file_name, 'wb')
+        f = open(file_name, 'ab')
         while True:
             a = self._recv_train()
-            if a == '成功'.encode('utf8'):
+            if a == ''.encode('utf8'):
                 break
             f.write(a)
         f.close()
@@ -110,7 +110,11 @@ class Client:
         train_head = self.connect.recv(4)
         if train_head:
             file_len = struct.unpack('I', train_head)
-            data = self.connect.recv(file_len[0])
+            data = ''.encode('utf8')
+            num = file_len[0]
+            while len(data) < file_len[0]:
+                data += self.connect.recv(num)
+                num -= len(data)
             return data
         else:
             return None

@@ -1,5 +1,0 @@
-file1 = open('file.txt', mode='r+', encoding='utf8')
-file1.seek(7)
-text = file1.read()
-file1.close()
-print(text)

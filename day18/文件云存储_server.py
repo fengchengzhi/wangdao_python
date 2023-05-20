@@ -15,9 +15,15 @@ class Server:
         self.listen.listen(128)
 
     def start(self):
-        client, client_addr = self.listen.accept()
-        print(client_addr)
-        user = User(client, client_addr)
+        po = Pool(3)
+        while True:
+            client, client_addr = self.listen.accept()
+            if client:
+                print(client_addr)
+                user = User(client, client_addr)
+                po.apply_async(self._deal_command, args=(user,))
+
+    def _deal_command(self, user):
         user.deal_command()
 
 
@@ -32,13 +38,13 @@ class User:
     def _gets_file(self, file_name):
         self._send_train(file_name.encode('utf8'))
         f = open(file_name, 'rb')
-        st = f.readline()
-        st = st.replace(b'\r\n', b'\n')
-        while st:
-            self._send_train(st)
-            st = f.readline()
-            st = st.replace(b'\r\n', b'\n')
-        self._send_train('成功'.encode('utf8'))
+        while True:
+            data = f.read(10000)
+            if data:
+                self._send_train(data)
+            else:
+                self._send_train(''.encode('utf8'))
+                break
         f.close()
 
     def _puts_file(self):
@@ -46,7 +52,7 @@ class User:
         f = open(file_name, 'wb')
         while True:
             a = self._recv_train()
-            if a == '成功'.encode('utf8'):
+            if a == ''.encode('utf8'):
                 break
             f.write(a)
         f.close()
@@ -142,7 +148,11 @@ class User:
         train_head = self.c.recv(4)
         if train_head:
             file_len = struct.unpack('I', train_head)
-            data = self.c.recv(file_len[0])
+            data = ''.encode('utf8')
+            num = file_len[0]
+            while len(data) < file_len[0]:
+                data += self.c.recv(num)
+                num -= len(data)
             return data
         else:
             return None
