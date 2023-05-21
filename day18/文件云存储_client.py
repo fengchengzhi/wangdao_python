@@ -28,7 +28,7 @@ class Client:
 
     def _gets_file(self):
         file_name = self._recv_train().decode('utf8')
-        f = open(file_name, 'ab')
+        f = open(file_name, 'wb')
         while True:
             a = self._recv_train()
             if a == ''.encode('utf8'):
@@ -114,6 +114,7 @@ class Client:
             num = file_len[0]
             while len(data) < file_len[0]:
                 data += self.connect.recv(num)
+                num = file_len[0]
                 num -= len(data)
             return data
         else:

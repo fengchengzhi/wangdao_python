@@ -152,6 +152,7 @@ class User:
             num = file_len[0]
             while len(data) < file_len[0]:
                 data += self.c.recv(num)
+                num = file_len[0]
                 num -= len(data)
             return data
         else:
